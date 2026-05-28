@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Novellino — Rare Splendor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* ══════════════════════════════════════
+       TOKENS
+    ══════════════════════════════════════ */
+    :root {
+      --wine:       #6b1a2a;
+      --wine-deep:  #3d0d17;
+      --wine-mid:   #7d2035;
+      --wine-light: #9b3040;
+      --gold:       #c9a96e;
+      --gold-light: #e8d5b0;
+      --cream:      #faf7f4;
+      --blush:      #f5e8e4;
+      --charcoal:   #0f0d0e;
+      --mid:        #6b6060;
+      --white:      #ffffff;
+      --ease-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-quart: cubic-bezier(0.76, 0, 0.24, 1);
+    }
+
+    /* ══════════════════════════════════════
+       RESET
+    ══════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--white);
+      color: var(--charcoal);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ══════════════════════════════════════
+       CURSOR
+    ══════════════════════════════════════ */
+    #cursor {
+      position: fixed; z-index: 9999;
+      width: 10px; height: 10px;
+      background: var(--wine);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      top: 0; left: 0;
+      mix-blend-mode: multiply;
+      transition: width .2s, height .2s, opacity .2s;
+    }
+    #cursor-follower {
+      position: fixed; z-index: 9998;
+      width: 38px; height: 38px;
+      border: 1.5px solid rgba(107,26,42,.3);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      top: 0; left: 0;
+      transition: width .35s var(--ease-expo), height .35s var(--ease-expo), border-color .35s;
+    }
+    body.cursor-hover #cursor { width: 14px; height: 14px; }
+    body.cursor-hover #cursor-follower { width: 60px; height: 60px; border-color: rgba(107,26,42,.5); }
+
+    /* ══════════════════════════════════════
+       LOADER
+    ══════════════════════════════════════ */
+    #loader {
+      position: fixed; inset: 0; z-index: 9000;
+      background: var(--charcoal);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 28px;
+    }
+    #loader .loader-logo {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      color: var(--white);
+      letter-spacing: .05em;
+      opacity: 0; transform: translateY(18px);
+      animation: fadeUp .8s .2s var(--ease-expo) forwards;
+    }
+    .loader-bar {
+      width: 180px; height: 1px;
+      background: rgba(255,255,255,.1);
+      position: relative; overflow: hidden;
+    }
+    .loader-bar::after {
+      content: '';
+      position: absolute; inset-y: 0; left: -100%;
+      width: 100%; background: var(--gold);
+      animation: loaderFill 1.8s .3s var(--ease-quart) forwards;
+    }
+    #loader .loader-sub {
+      font-size: .62rem; letter-spacing: .22em;
+      color: rgba(255,255,255,.25);
+      text-transform: uppercase;
+      opacity: 0; animation: fadeUp .6s .5s var(--ease-expo) forwards;
+    }
+    @keyframes loaderFill { to { left: 0; } }
+    #loader.exit { animation: loaderSlideOut .75s var(--ease-quart) forwards; }
+    @keyframes loaderSlideOut {
+      0%   { clip-path: inset(0 0 0 0); }
+      100% { clip-path: inset(0 0 100% 0); }
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--wine); }
+
+    /* ══════════════════════════════════════
+       NAV
+    ══════════════════════════════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 30px 60px;
+      transition: padding .5s var(--ease-expo), background .5s, backdrop-filter .5s, box-shadow .5s;
+    }
+    nav.scrolled {
+      padding: 16px 60px;
+      background: rgba(250,247,244,.93);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow: 0 1px 0 rgba(0,0,0,.07);
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-style: italic; font-size: 1.65rem;
+      color: var(--charcoal); text-decoration: none;
+      letter-spacing: .02em; position: relative; z-index: 1;
+    }
+    .nav-logo em { color: var(--wine); font-style: normal; }
+    .nav-links { display: flex; gap: 44px; list-style: none; }
+    .nav-links a {
+      font-size: .67rem; font-weight: 500;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--charcoal); text-decoration: none;
+      position: relative; padding-bottom: 4px;
+      transition: color .25s;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute; bottom: 0; left: 50%; right: 50%;
+      height: 1px; background: var(--wine);
+      transition: left .35s var(--ease-expo), right .35s var(--ease-expo);
+    }
+    .nav-links a:hover { color: var(--wine); }
+    .nav-links a:hover::after { left: 0; right: 0; }
+    .nav-actions { display: flex; align-items: center; gap: 16px; }
+    .nav-cart {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: var(--wine); border: none; cursor: none;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .3s, transform .3s, box-shadow .3s;
+      box-shadow: 0 6px 24px rgba(107,26,42,.35);
+    }
+    .nav-cart:hover { background: var(--wine-deep); transform: scale(1.08); box-shadow: 0 10px 32px rgba(107,26,42,.5); }
+    .nav-cart svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 1.7; }
+    .nav-hamburger { display: none; flex-direction: column; gap: 6px; background: none; border: none; cursor: none; padding: 4px; }
+    .nav-hamburger span { display: block; width: 24px; height: 1.5px; background: var(--charcoal); transition: .35s var(--ease-expo); border-radius: 2px; }
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+    .mobile-menu {
+      position: fixed; inset: 0; z-index: 190;
+      background: var(--charcoal);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 36px;
+      opacity: 0; visibility: hidden;
+      transition: opacity .4s, visibility .4s;
+      pointer-events: none;
+    }
+    .mobile-menu.open { opacity: 1; visibility: visible; pointer-events: auto; }
+    .mobile-menu a {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 6vw, 3rem);
+      color: var(--white); text-decoration: none;
+      transition: color .25s; letter-spacing: .02em;
+    }
+    .mobile-menu a:hover { color: var(--gold); }
+
+    /* ══════════════════════════════════════
+       HERO  ← KEY FIX: proper 2-col grid
+       hero-content = col-1, hero-right = col-2
+       both are DIRECT children of #hero
+    ══════════════════════════════════════ */
+    #hero {
+      height: 100vh; min-height: 700px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+      position: relative;
+      background: var(--white);
+    }
+
+    /* Fine dot grid on left side */
+    .hero-grid {
+      position: absolute; inset: 0; z-index: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(107,26,42,.08) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse 55% 80% at 15% 50%, black 0%, transparent 100%);
+    }
+
+    /* Ghost year number, left side */
+    .hero-number {
+      position: absolute;
+      left: -2%; bottom: -6%;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(160px, 22vw, 340px);
+      line-height: 1; font-weight: 900;
+      color: rgba(107,26,42,.04);
+      user-select: none; pointer-events: none;
+      z-index: 0; letter-spacing: -.04em;
+      will-change: transform;
+    }
+
+    /* ─── LEFT COLUMN ─── */
+    .hero-content {
+      position: relative; z-index: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      /* top padding ensures content always clears the fixed nav */
+      padding: 110px 52px 56px 68px;
+      overflow: hidden;
+    }
+    .hero-left {
+      display: flex; flex-direction: column;
+      width: 100%;
+      position: relative; z-index: 1;
+    }
+
+    .hero-eyebrow {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 22px;
+      opacity: 0; transform: translateY(20px);
+      animation: fadeUp .8s .8s var(--ease-expo) forwards;
+    }
+    .hero-eyebrow-line { width: 36px; height: 1px; background: var(--wine); }
+    .hero-eyebrow span {
+      font-size: .64rem; font-weight: 500;
+      letter-spacing: .22em; text-transform: uppercase;
+      color: var(--wine);
+    }
+
+    .hero-h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(64px, 8vw, 118px);
+      line-height: .88; font-weight: 900;
+      color: var(--charcoal); letter-spacing: -.025em;
+      opacity: 0; transform: translateY(40px);
+      animation: fadeUp .9s 1s var(--ease-expo) forwards;
+    }
+    .hero-h1 em {
+      display: block; font-style: italic; font-weight: 400;
+      color: var(--wine);
+      font-size: clamp(58px, 7.5vw, 112px);
+    }
+
+    .hero-desc {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem; line-height: 1.9;
+      color: var(--mid); margin-top: 22px;
+      max-width: 340px;
+      opacity: 0; transform: translateY(20px);
+      animation: fadeUp .8s 1.2s var(--ease-expo) forwards;
+    }
+
+    .hero-cta {
+      display: flex; align-items: center; gap: 14px;
+      margin-top: 34px;
+      opacity: 0; transform: translateY(20px);
+      animation: fadeUp .8s 1.4s var(--ease-expo) forwards;
+    }
+
+    .hero-scroll-hint {
+      margin-top: 60px;
+      display: flex; align-items: center; gap: 12px;
+      opacity: 0;
+      animation: fadeUp .8s 1.8s var(--ease-expo) forwards;
+    }
+    .hero-scroll-line {
+      width: 1px; height: 44px;
+      background: linear-gradient(to bottom, transparent, var(--wine));
+      animation: scrollPulse 2s 2.5s infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: .4; }
+      50%       { opacity: 1; }
+    }
+    .hero-scroll-hint span {
+      font-size: .57rem; font-weight: 500;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: var(--mid); writing-mode: vertical-rl;
+    }
+
+    /* ─── RIGHT COLUMN ─── */
+    .hero-right {
+      position: relative;
+      overflow: hidden;
+      /* Solid base colour — eliminates octagon clipping artefact */
+      background: var(--wine-deep);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    /* Gradient overlay fills the whole column — NO border-radius clipping */
+    .hero-circle-bg {
+      position: absolute;
+      inset: 0;
+      border-radius: 0;
+      background: radial-gradient(
+        ellipse 110% 95% at 50% 28%,
+        var(--wine-light) 0%,
+        var(--wine)       44%,
+        var(--wine-deep)  100%
+      );
+      box-shadow: none;
+    }
+
+    /* Decorative rings — centered in column, spin in place */
+    .hero-ring-outer {
+      position: absolute;
+      width: 70%; aspect-ratio: 1;
+      border-radius: 50%;
+      border: 1px solid rgba(201,169,110,.2);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: slowSpin 55s linear infinite;
+      pointer-events: none; z-index: 2;
+    }
+    .hero-ring-outer::before {
+      content: '';
+      position: absolute; inset: 16px;
+      border-radius: 50%;
+      border: 1px dashed rgba(201,169,110,.09);
+    }
+    .hero-ring-outer2 {
+      position: absolute;
+      width: 88%; aspect-ratio: 1;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.05);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none; z-index: 2;
+    }
+    @keyframes slowSpin {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to   { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Watermark "1998" inside circle */
+    .hero-circle-text {
+      position: absolute;
+      bottom: -2%; right: -4%;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(120px, 16vw, 220px);
+      font-weight: 900; line-height: 1;
+      color: rgba(255,255,255,.05);
+      user-select: none; pointer-events: none;
+      z-index: 2; letter-spacing: -.04em;
+      will-change: transform;
+    }
+
+    /* Bottle image — tall, centered, with depth shadow */
+    .hero-bottle-img {
+      position: relative; z-index: 5;
+      /* Fill ~85% of viewport height for maximum impact */
+      height: clamp(500px, 85vh, 760px);
+      width: auto;
+      object-fit: contain;
+      filter:
+        drop-shadow(0 60px 100px rgba(0,0,0,.6))
+        drop-shadow(0 20px 40px rgba(61,13,23,.5));
+      will-change: transform;
+      opacity: 0;
+      animation: bottleRise 1.4s .9s var(--ease-expo) forwards;
+      /* Center vertically — remove bottom anchor so full height shows */
+      align-self: center;
+      margin-bottom: 0;
+      flex-shrink: 0;
+    }
+    @keyframes bottleRise {
+      from { opacity: 0; transform: translateY(80px) scale(.93); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Glass-morphism info badge */
+    /* Glass-morphism info badge — lower left, clear of nav */
+    .hero-badge {
+      position: absolute;
+      top: 12%; left: 6%;
+      z-index: 6;
+      opacity: 0;
+      animation: fadeUp .7s 1.7s var(--ease-expo) forwards;
+    }
+    .hero-badge-inner {
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(201,169,110,.3);
+      border-radius: 14px;
+      padding: 14px 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.16);
+    }
+    .hero-badge-label {
+      font-size: .52rem; font-weight: 500;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: var(--wine); margin-bottom: 4px;
+    }
+    .hero-badge-name {
+      font-family: 'Playfair Display', serif;
+      font-size: .96rem; font-weight: 700;
+      color: var(--charcoal);
+    }
+    .hero-badge-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: .86rem;
+      color: var(--mid); margin-top: 2px;
+    }
+
+    /* ABV pill — upper right, appropriately scaled */
+    .hero-abv {
+      position: absolute;
+      top: 12%; right: 6%;
+      z-index: 6;
+      text-align: right;
+      opacity: 0;
+      animation: fadeUp .7s 1.95s var(--ease-expo) forwards;
+    }
+    .hero-abv-num {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 2.6vw, 3rem);
+      font-weight: 900; line-height: 1;
+      color: var(--white); letter-spacing: -.03em;
+      text-shadow: 0 4px 20px rgba(0,0,0,.3);
+    }
+    .hero-abv-num sup {
+      font-size: .34em; font-weight: 400;
+      vertical-align: super; color: var(--gold);
+    }
+    .hero-abv-label {
+      font-size: .55rem; font-weight: 500;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: rgba(255,255,255,.5);
+    }
+
+    /* ══════════════════════════════════════
+       BUTTONS
+    ══════════════════════════════════════ */
+    .btn {
+      display: inline-flex; align-items: center; gap: 12px;
+      font-size: .7rem; font-weight: 500;
+      letter-spacing: .14em; text-transform: uppercase;
+      text-decoration: none; border: none; cursor: none;
+      padding: 17px 34px; border-radius: 60px;
+      position: relative; overflow: hidden;
+      transition: color .3s, box-shadow .3s, transform .3s;
+    }
+    .btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      transform: scaleX(0); transform-origin: right;
+      transition: transform .4s var(--ease-expo);
+      border-radius: inherit;
+    }
+    .btn:hover::before { transform: scaleX(1); transform-origin: left; }
+    .btn span, .btn svg { position: relative; z-index: 1; }
+    .btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.2; flex-shrink: 0; transition: transform .3s; }
+    .btn:hover svg { transform: translateX(4px); }
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-dark {
+      background: var(--charcoal); color: var(--white);
+      box-shadow: 0 6px 22px rgba(0,0,0,.22);
+    }
+    .btn-dark::before { background: var(--wine); }
+    .btn-dark:hover { box-shadow: 0 12px 36px rgba(107,26,42,.4); }
+
+    .btn-ghost {
+      background: transparent; color: var(--charcoal);
+      border: 1.5px solid rgba(15,13,14,.2);
+    }
+    .btn-ghost::before { background: var(--charcoal); }
+    .btn-ghost:hover { color: var(--white); border-color: transparent; }
+
+    .btn-outline-white {
+      background: transparent; color: var(--white);
+      border: 1.5px solid rgba(255,255,255,.3);
+    }
+    .btn-outline-white::before { background: rgba(255,255,255,.1); }
+    .btn-outline-white:hover { border-color: rgba(255,255,255,.6); }
+
+    .btn-gold {
+      background: var(--gold); color: var(--charcoal);
+      box-shadow: 0 6px 24px rgba(201,169,110,.35);
+    }
+    .btn-gold::before { background: var(--charcoal); }
+    .btn-gold:hover { color: var(--white); box-shadow: 0 12px 36px rgba(0,0,0,.25); }
+
+    /* ══════════════════════════════════════
+       MARQUEE
+    ══════════════════════════════════════ */
+    .marquee-strip {
+      background: var(--wine);
+      padding: 15px 0;
+      overflow: hidden;
+      position: relative; z-index: 10;
+    }
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: marquee 30s linear infinite;
+    }
+    .marquee-track:hover { animation-play-state: paused; }
+    .marquee-item {
+      display: flex; align-items: center; gap: 24px;
+      padding: 0 24px; white-space: nowrap;
+      font-size: .64rem; font-weight: 500;
+      letter-spacing: .22em; text-transform: uppercase;
+      color: rgba(255,255,255,.65);
+    }
+    .marquee-item .dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--gold); flex-shrink: 0;
+    }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ══════════════════════════════════════
+       CRAFT
+    ══════════════════════════════════════ */
+    #craft {
+      background: var(--charcoal);
+      position: relative; overflow: hidden;
+      padding: 130px 0;
+    }
+    #craft::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 55% 65% at 18% 50%, rgba(107,26,42,.28) 0%, transparent 65%),
+        radial-gradient(ellipse 45% 55% at 82% 50%, rgba(107,26,42,.14) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    #craft::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.045'/%3E%3C/svg%3E");
+      background-size: 256px; opacity: .5; pointer-events: none;
+    }
+    .craft-inner {
+      position: relative; z-index: 1;
+      max-width: 1280px; margin: 0 auto;
+      padding: 0 60px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center; gap: 72px;
+    }
+    .craft-tag {
+      display: inline-flex; align-items: center; gap: 10px;
+      margin-bottom: 26px;
+    }
+    .craft-tag-line { width: 30px; height: 1px; background: var(--gold); }
+    .craft-tag span {
+      font-size: .62rem; font-weight: 500;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: var(--gold);
+    }
+    .craft-left h2, .craft-right h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(38px, 4.2vw, 60px);
+      color: var(--white); line-height: 1.02;
+      letter-spacing: -.01em; margin-bottom: 22px;
+    }
+    .craft-left p, .craft-right p {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem; line-height: 1.9;
+      color: rgba(255,255,255,.5);
+    }
+    .craft-right { text-align: right; }
+    .craft-bottle-wrap {
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .craft-bottle-glow {
+      position: absolute;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(107,26,42,.55) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .craft-bottle-img {
+      width: 200px;
+      filter: drop-shadow(0 28px 56px rgba(0,0,0,.6));
+      transition: transform .8s var(--ease-expo);
+      transform-origin: bottom center;
+      position: relative; z-index: 1;
+    }
+    .craft-bottle-wrap:hover .craft-bottle-img {
+      transform: translateY(-18px) rotate(-3deg) scale(1.05);
+    }
+    .craft-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: rgba(255,255,255,.07);
+      margin-top: 80px;
+      border-top: 1px solid rgba(255,255,255,.07);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      position: relative; z-index: 1;
+    }
+    .stat-item {
+      padding: 44px 60px;
+      background: var(--charcoal);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .stat-item + .stat-item { border-left: 1px solid rgba(255,255,255,.05); }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(46px, 4.8vw, 68px);
+      font-weight: 700; color: var(--white);
+      letter-spacing: -.02em; line-height: 1;
+    }
+    .stat-num span { color: var(--gold); }
+    .stat-label {
+      font-size: .68rem; font-weight: 500;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+    }
+
+    /* ══════════════════════════════════════
+       FEATURES
+    ══════════════════════════════════════ */
+    #features {
+      background: var(--charcoal);
+      position: relative; overflow: hidden;
+    }
+    .features-band {
+      background: var(--wine);
+      padding: 76px 0 96px;
+      position: relative; overflow: hidden;
+    }
+    .features-band::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+      background-size: 180px; pointer-events: none;
+    }
+    .features-band::after {
+      content: '';
+      position: absolute;
+      bottom: -58px; left: -5%; right: -5%;
+      height: 116px;
+      background: var(--charcoal);
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    }
+    .features-band-header {
+      text-align: center;
+      position: relative; z-index: 1;
+    }
+    .features-band-eyebrow {
+      display: inline-flex; align-items: center; gap: 14px;
+      margin-bottom: 16px;
+    }
+    .features-band-eyebrow-line { width: 26px; height: 1px; background: rgba(201,169,110,.55); }
+    .features-band-eyebrow span {
+      font-size: .62rem; font-weight: 500;
+      letter-spacing: .22em; text-transform: uppercase;
+      color: rgba(201,169,110,.75);
+    }
+    .features-band-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(34px, 4.8vw, 64px);
+      font-weight: 900; color: var(--white);
+      line-height: .92; letter-spacing: -.02em;
+    }
+    .features-band-title em {
+      display: block; font-style: italic; font-weight: 400;
+      color: rgba(255,255,255,.5);
+      font-size: clamp(28px, 3.8vw, 52px);
+      margin-top: 6px;
+    }
+    .features-content {
+      padding: 76px 60px 96px;
+      position: relative; z-index: 1;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .feat {
+      display: flex; flex-direction: column;
+      align-items: flex-start; gap: 18px;
+      padding: 38px 28px;
+      background: rgba(255,255,255,.02);
+      border-right: 1px solid rgba(255,255,255,.05);
+      transition: background .4s var(--ease-expo);
+      opacity: 0; transform: translateY(24px);
+      cursor: none; position: relative; overflow: hidden;
+    }
+    .feat:last-child { border-right: none; }
+    .feat.visible { opacity: 1; transform: translateY(0); }
+    .feat:hover { background: rgba(107,26,42,.18); }
+    .feat::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(to right, var(--wine), var(--gold));
+      transform: scaleX(0); transform-origin: left;
+      transition: transform .4s var(--ease-expo);
+    }
+    .feat:hover::before { transform: scaleX(1); }
+    .feat-icon {
+      width: 50px; height: 50px; border-radius: 12px;
+      background: rgba(107,26,42,.28);
+      border: 1px solid rgba(107,26,42,.45);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .3s, border-color .3s, transform .3s;
+    }
+    .feat:hover .feat-icon {
+      background: rgba(107,26,42,.5);
+      border-color: var(--gold);
+      transform: scale(1.06);
+    }
+    .feat-icon svg {
+      width: 20px; height: 20px;
+      stroke: rgba(255,255,255,.7); fill: none;
+      stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+      transition: stroke .3s;
+    }
+    .feat:hover .feat-icon svg { stroke: var(--gold); }
+    .feat-label {
+      font-size: .7rem; font-weight: 500;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: rgba(255,255,255,.85); line-height: 1.4;
+      margin-bottom: 5px;
+    }
+    .feat-desc {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: .93rem; line-height: 1.6;
+      color: rgba(255,255,255,.32);
+    }
+
+    /* ══════════════════════════════════════
+       WINES
+    ══════════════════════════════════════ */
+    #wines {
+      background: var(--white);
+      padding: 130px 60px 150px;
+      overflow: hidden;
+    }
+    .wines-header {
+      display: flex; align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 90px;
+    }
+    .wines-eyebrow {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 16px;
+    }
+    .wines-eyebrow-line { width: 30px; height: 1px; background: var(--wine); }
+    .wines-eyebrow span {
+      font-size: .64rem; font-weight: 500;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: var(--wine);
+    }
+    #wines h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(50px, 7.5vw, 100px);
+      font-weight: 900; color: var(--charcoal);
+      line-height: .88; letter-spacing: -.02em;
+    }
+    #wines h2 em { display: block; font-style: italic; font-weight: 400; color: var(--wine); }
+    .wines-header-right {
+      padding-bottom: 8px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.08rem; color: var(--mid); line-height: 1.75;
+      max-width: 280px; text-align: right;
+    }
+    .wines-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 14px;
+      position: relative;
+    }
+    .wines-row::before {
+      content: '';
+      position: absolute;
+      bottom: -22px; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(107,26,42,.1), transparent);
+    }
+    .wine-card {
+      flex: 1; max-width: 210px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 18px;
+      cursor: none;
+      padding: 22px 10px 26px;
+      border-radius: 22px;
+      border: 1px solid transparent;
+      transition: background .35s, border-color .35s, transform .5s var(--ease-expo);
+      opacity: 0; transform: translateY(60px);
+    }
+    .wine-card.visible { opacity: 1; transform: translateY(0); }
+    .wine-card:nth-child(3) { max-width: 250px; }
+    .wine-card:hover {
+      background: var(--cream);
+      border-color: rgba(107,26,42,.1);
+      transform: translateY(-14px);
+    }
+    .wine-img-wrap { position: relative; transition: transform .45s var(--ease-expo); }
+    .wine-card img {
+      display: block;
+      height: clamp(190px, 21vw, 285px);
+      width: auto; object-fit: contain;
+      filter: drop-shadow(0 14px 28px rgba(0,0,0,.13));
+      transition: filter .35s;
+    }
+    .wine-card:nth-child(3) img { height: clamp(230px, 25vw, 325px); }
+    .wine-card:hover img { filter: drop-shadow(0 22px 44px rgba(107,26,42,.22)); }
+    .wine-img-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: -14px; left: 50%; transform: translateX(-50%);
+      width: 75%; height: 36px;
+      background: radial-gradient(ellipse at center, rgba(107,26,42,.12) 0%, transparent 70%);
+      opacity: 0; transition: opacity .35s; border-radius: 50%;
+    }
+    .wine-card:hover .wine-img-wrap::after { opacity: 1; }
+    .wine-info { text-align: center; }
+    .wine-name {
+      font-family: 'Playfair Display', serif;
+      font-size: .8rem; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--mid); margin-bottom: 5px;
+      transition: color .25s;
+    }
+    .wine-card:hover .wine-name { color: var(--wine); }
+    .wine-type {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: .92rem;
+      color: rgba(107,107,107,.55);
+    }
+
+    /* ══════════════════════════════════════
+       TAGLINE
+    ══════════════════════════════════════ */
+    #tagline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .tl-left {
+      background: var(--cream);
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 100px 72px 100px 68px;
+      position: relative; overflow: hidden;
+    }
+    .tl-left::before {
+      content: '"';
+      position: absolute; top: -80px; left: 36px;
+      font-family: 'Playfair Display', serif;
+      font-size: 380px; line-height: 1;
+      color: rgba(107,26,42,.035);
+      pointer-events: none; user-select: none;
+    }
+    .tl-eyebrow {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 30px; position: relative; z-index: 1;
+    }
+    .tl-eyebrow-line { width: 30px; height: 1px; background: var(--wine); }
+    .tl-eyebrow span {
+      font-size: .64rem; font-weight: 500;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: var(--wine);
+    }
+    .tl-left h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(50px, 7vw, 104px);
+      line-height: .9; color: var(--charcoal);
+      letter-spacing: -.02em; position: relative; z-index: 1;
+    }
+    .tl-left h2 .accent { color: var(--wine); }
+    .tl-left h2 em {
+      display: block; font-style: italic; font-weight: 400;
+      font-size: clamp(46px, 6.5vw, 100px);
+    }
+    .tl-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.12rem; line-height: 1.85;
+      color: var(--mid); margin-top: 26px;
+      max-width: 360px; position: relative; z-index: 1;
+    }
+    .tl-left .btn { margin-top: 44px; position: relative; z-index: 1; align-self: flex-start; }
+    .tl-right {
+      background: var(--wine);
+      position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tl-right::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E");
+      background-size: 200px; pointer-events: none;
+    }
+    .tl-right::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 100% at 50% 50%, rgba(61,13,23,.4) 0%, transparent 70%);
+    }
+    .tl-bottle {
+      height: 86%; max-height: 860px;
+      object-fit: contain;
+      filter: drop-shadow(0 60px 120px rgba(0,0,0,.5));
+      will-change: transform;
+      position: relative; z-index: 2;
+    }
+    .tl-watermark {
+      position: absolute; z-index: 1;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: clamp(60px, 10vw, 140px);
+      color: rgba(255,255,255,.04);
+      white-space: nowrap; user-select: none; pointer-events: none;
+      bottom: 6%; left: 50%; transform: translateX(-50%);
+    }
+    .tl-ring {
+      position: absolute; width: 320px; height: 320px;
+      border-radius: 50%; border: 1px solid rgba(201,169,110,.14);
+      top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1;
+    }
+    .tl-ring2 {
+      position: absolute; width: 460px; height: 460px;
+      border-radius: 50%; border: 1px solid rgba(201,169,110,.06);
+      top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1;
+    }
+
+    /* ══════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════ */
+    footer { background: var(--charcoal); }
+    .footer-top {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 44px;
+      padding: 96px 68px 68px;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .footer-logo {
+      font-family: 'Playfair Display', serif;
+      font-style: italic; font-size: 1.9rem;
+      color: var(--white); text-decoration: none;
+      display: block; margin-bottom: 18px;
+    }
+    .footer-logo em { color: var(--gold); font-style: normal; }
+    .footer-tagline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.02rem; line-height: 1.8;
+      color: rgba(255,255,255,.3); max-width: 230px;
+    }
+    .footer-social { display: flex; gap: 10px; margin-top: 28px; }
+    .social-btn {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.07);
+      display: flex; align-items: center; justify-content: center;
+      cursor: none; text-decoration: none;
+      transition: background .25s, border-color .25s, transform .25s;
+    }
+    .social-btn:hover { background: var(--wine); border-color: var(--wine); transform: translateY(-3px); }
+    .social-btn svg { width: 15px; height: 15px; fill: none; stroke: rgba(255,255,255,.55); stroke-width: 1.7; }
+    .social-btn:hover svg { stroke: #fff; }
+    .footer-col h5 {
+      font-size: .6rem; font-weight: 500;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: rgba(255,255,255,.22); margin-bottom: 22px;
+    }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 13px; }
+    .footer-col ul a {
+      font-size: .88rem; color: rgba(255,255,255,.45);
+      text-decoration: none;
+      transition: color .2s, padding-left .2s;
+      display: inline-block;
+    }
+    .footer-col ul a:hover { color: var(--white); padding-left: 6px; }
+    .footer-bottom {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 22px 68px; flex-wrap: wrap; gap: 10px;
+    }
+    .footer-bottom p { font-size: .73rem; color: rgba(255,255,255,.22); }
+    .footer-legal {
+      font-size: .62rem; letter-spacing: .12em; text-transform: uppercase;
+      color: rgba(255,255,255,.16);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .footer-legal::before { content: ''; display: block; width: 14px; height: 1px; background: rgba(255,255,255,.16); }
+
+    /* ══════════════════════════════════════
+       SCROLL REVEAL
+    ══════════════════════════════════════ */
+    .reveal {
+      opacity: 0; transform: translateY(28px);
+      transition: opacity .8s var(--ease-expo), transform .8s var(--ease-expo);
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width: 1200px) {
+      .craft-inner { grid-template-columns: 1fr; text-align: center; padding: 0 40px; }
+      .craft-right { text-align: center; }
+      .craft-right .btn { margin-left: auto; margin-right: auto; }
+      .craft-tag { justify-content: center; }
+      .craft-stats { grid-template-columns: repeat(3, 1fr); }
+      .stat-item { padding: 36px 40px; }
+      .footer-top { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 1024px) {
+      nav { padding: 18px 28px; }
+      nav.scrolled { padding: 12px 28px; }
+      .nav-links { display: none; }
+      .nav-hamburger { display: flex; }
+
+      #hero { grid-template-columns: 1fr; }
+      .hero-content { padding: 120px 28px 60px; }
+      .hero-right { display: none; }
+      .hero-h1 { font-size: clamp(60px, 14vw, 110px); }
+      .hero-desc { max-width: 100%; }
+
+      #tagline { grid-template-columns: 1fr; }
+      .tl-right { min-height: 55vw; }
+      .tl-left { padding: 72px 36px; }
+
+      #wines { padding: 90px 28px 110px; }
+      .wines-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+      .wines-header-right { text-align: left; max-width: 100%; }
+      .wines-row { flex-wrap: wrap; justify-content: center; }
+      .wine-card { max-width: 170px; }
+      .wine-card:nth-child(3) { max-width: 190px; }
+
+      .features-grid { grid-template-columns: repeat(3, 1fr); }
+      .features-content { padding: 56px 28px 76px; }
+      .footer-top { grid-template-columns: 1fr 1fr; padding: 56px 28px 36px; }
+      .footer-bottom { padding: 18px 28px; }
+      .craft-stats { grid-template-columns: 1fr; }
+      .stat-item + .stat-item { border-left: none; border-top: 1px solid rgba(255,255,255,.05); }
+    }
+
+    @media (max-width: 640px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .wine-card { flex: 0 0 44%; max-width: 160px; }
+      .wine-card:nth-child(3) { flex: 0 0 54%; max-width: 180px; }
+      .tl-left { padding: 56px 22px; }
+      #wines { padding: 72px 22px 90px; }
+      .footer-top { grid-template-columns: 1fr; }
+      .craft-inner { padding: 0 22px; }
+      nav { padding: 14px 20px; }
+      .wines-row { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="cursor"></div>
+  <div id="cursor-follower"></div>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <div class="loader-logo">Novellino</div>
+    <div class="loader-bar"></div>
+    <div class="loader-sub">Est. 1998 · Philippines</div>
+  </div>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <a href="#" class="nav-logo">Novelli<em>n</em>o</a>
+    <ul class="nav-links">
+      <li><a href="#wines">Our Wines</a></li>
+      <li><a href="#craft">Our Purpose</a></li>
+      <li><a href="#tagline">Our Story</a></li>
+      <li><a href="#footer">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="nav-cart" aria-label="Cart">
+        <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      </button>
+      <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#wines"   onclick="closeMenu()">Our Wines</a>
+    <a href="#craft"   onclick="closeMenu()">Our Purpose</a>
+    <a href="#tagline" onclick="closeMenu()">Our Story</a>
+    <a href="#footer"  onclick="closeMenu()">Contact</a>
+  </div>
+
+  <!-- ═══ HERO ═══════════════════════════════════════
+       FIX: hero-content (col-1) and hero-right (col-2)
+       are now DIRECT children of #hero grid.
+  ════════════════════════════════════════════════════ -->
+  <section id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-number" id="heroNum">1998</div>
+
+    <!-- LEFT COLUMN -->
+    <div class="hero-content">
+      <div class="hero-left">
+        <div class="hero-eyebrow">
+          <div class="hero-eyebrow-line"></div>
+          <span>Filipino Wine Since 1998</span>
+        </div>
+        <h1 class="hero-h1">Rare<em>Splendor</em></h1>
+        <p class="hero-desc">For over 25 years, we've poured the perfect sweet, delightful taste into every Filipino gathering. The trusted, perfect wine for every cherished moment.</p>
+        <div class="hero-cta">
+          <a href="#wines" class="btn btn-dark">
+            <span>Shop Now</span>
+            <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <a href="#craft" class="btn btn-ghost">
+            <span>Our Story</span>
+          </a>
+        </div>
+        <div class="hero-scroll-hint">
+          <div class="hero-scroll-line"></div>
+          <span>Scroll to discover</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN — direct child of #hero grid (this was the bug) -->
+    <div class="hero-right" id="heroRight">
+      <div class="hero-ring-outer2"></div>
+      <div class="hero-ring-outer" id="heroRing"></div>
+      <div class="hero-circle-bg" id="heroCircle"></div>
+      <div class="hero-circle-text" id="heroCircleText">1998</div>
+      <img
+        class="hero-bottle-img"
+        id="heroBottle"
+        src="rosso classico.png"
+        alt="Novellino Rosso Classico"
+      />
+      <!-- Info badge -->
+      <div class="hero-badge">
+        <div class="hero-badge-inner">
+          <div class="hero-badge-label">Flagship Variety</div>
+          <div class="hero-badge-name">Rosso Classico</div>
+          <div class="hero-badge-sub">Classic Sweet Red Wine</div>
+        </div>
+      </div>
+      <!-- ABV pill -->
+      <div class="hero-abv">
+        <div class="hero-abv-num">4.5<sup>°</sup></div>
+        <div class="hero-abv-label">Alcohol Vol.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-strip" aria-hidden="true">
+    <div class="marquee-track">
+      <div class="marquee-item"><span class="dot"></span>Rosso Classico</div>
+      <div class="marquee-item"><span class="dot"></span>Strawberry Passion</div>
+      <div class="marquee-item"><span class="dot"></span>Wild Blackberry</div>
+      <div class="marquee-item"><span class="dot"></span>Sangria</div>
+      <div class="marquee-item"><span class="dot"></span>Rosso Tradizionale</div>
+      <div class="marquee-item"><span class="dot"></span>Est. Philippines 1998</div>
+      <div class="marquee-item"><span class="dot"></span>Rare Splendor</div>
+      <div class="marquee-item"><span class="dot"></span>Rosso Classico</div>
+      <div class="marquee-item"><span class="dot"></span>Strawberry Passion</div>
+      <div class="marquee-item"><span class="dot"></span>Wild Blackberry</div>
+      <div class="marquee-item"><span class="dot"></span>Sangria</div>
+      <div class="marquee-item"><span class="dot"></span>Rosso Tradizionale</div>
+      <div class="marquee-item"><span class="dot"></span>Est. Philippines 1998</div>
+      <div class="marquee-item"><span class="dot"></span>Rare Splendor</div>
+    </div>
+  </div>
+
+  <!-- ═══ CRAFT ══════════════════════════════════════ -->
+  <section id="craft">
+    <div class="craft-inner">
+      <div class="craft-left">
+        <div class="craft-tag reveal">
+          <div class="craft-tag-line"></div>
+          <span>Timeless Craft</span>
+        </div>
+        <h2 class="reveal" style="transition-delay:.08s">Crafted with<br>Italian Precision</h2>
+        <p class="reveal" style="transition-delay:.16s">Achieving this rich, sweet taste is difficult and costly — but your expectation is worth it. We invest in state-of-the-art Italian equipment to precisely control fermentation, securing the flawless, sweet flavor you love every time.</p>
+      </div>
+      <div class="craft-bottle-wrap">
+        <div class="craft-bottle-glow"></div>
+        <img class="craft-bottle-img" src="rosso classico.png" alt="Novellino Rosso Classico"/>
+      </div>
+      <div class="craft-right">
+        <div class="craft-tag reveal" style="justify-content:flex-end">
+          <span>People's Choice</span>
+          <div class="craft-tag-line"></div>
+        </div>
+        <h2 class="reveal" style="transition-delay:.08s">The Nation's<br>Favorite Wine</h2>
+        <p class="reveal" style="transition-delay:.16s">We've redefined how Filipinos enjoy wine. From Noche Buena to simple movie nights, Novellino is the sparkling joy that helps you focus on connecting with the people you love.</p>
+        <a href="#wines" class="btn btn-outline-white reveal" style="transition-delay:.24s; margin-top:36px; display:inline-flex">
+          <span>Explore Wines</span>
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="craft-stats">
+      <div class="stat-item reveal">
+        <div class="stat-num">25<span>+</span></div>
+        <div class="stat-label">Years of Excellence</div>
+      </div>
+      <div class="stat-item reveal" style="transition-delay:.1s">
+        <div class="stat-num">5<span>M+</span></div>
+        <div class="stat-label">Bottles Shared</div>
+      </div>
+      <div class="stat-item reveal" style="transition-delay:.2s">
+        <div class="stat-num">#<span>1</span></div>
+        <div class="stat-label">Sweet Wine in the Philippines</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FEATURES ═══════════════════════════════════ -->
+  <section id="features">
+    <div class="features-band">
+      <div class="features-band-header reveal">
+        <div class="features-band-eyebrow">
+          <div class="features-band-eyebrow-line"></div>
+          <span>Why Novellino</span>
+          <div class="features-band-eyebrow-line"></div>
+        </div>
+        <div class="features-band-title">
+          The Promise<em>in every bottle</em>
+        </div>
+      </div>
+    </div>
+    <div class="features-content">
+      <div class="features-grid">
+        <div class="feat" style="transition-delay:.05s">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          </div>
+          <div class="feat-text">
+            <div class="feat-label">Quick Delivery</div>
+            <div class="feat-desc">From our cellar to your doorstep, fast.</div>
+          </div>
+        </div>
+        <div class="feat" style="transition-delay:.12s">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          </div>
+          <div class="feat-text">
+            <div class="feat-label">Easy Returns</div>
+            <div class="feat-desc">No fuss, no questions — we've got you.</div>
+          </div>
+        </div>
+        <div class="feat" style="transition-delay:.19s">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div class="feat-text">
+            <div class="feat-label">Quality Assured</div>
+            <div class="feat-desc">Every bottle held to Italian precision.</div>
+          </div>
+        </div>
+        <div class="feat" style="transition-delay:.26s">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          </div>
+          <div class="feat-text">
+            <div class="feat-label">Secure Payment</div>
+            <div class="feat-desc">Safe, encrypted checkout every time.</div>
+          </div>
+        </div>
+        <div class="feat" style="transition-delay:.33s">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 2c-4 6-4 14 0 20M12 2c4 6 4 14 0 20M2 12h20"/></svg>
+          </div>
+          <div class="feat-text">
+            <div class="feat-label">Eco Friendly</div>
+            <div class="feat-desc">Sustainable practices, lovingly bottled.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ WINES ═══════════════════════════════════════ -->
+  <section id="wines">
+    <div class="wines-header">
+      <div class="wines-header-left">
+        <div class="wines-eyebrow reveal">
+          <div class="wines-eyebrow-line"></div>
+          <span>Our Collection</span>
+        </div>
+        <h2 class="reveal" style="transition-delay:.08s">Everyday<em>Red</em></h2>
+      </div>
+      <div class="wines-header-right reveal" style="transition-delay:.16s">
+        Five distinct expressions, one shared spirit. Each bottle is crafted for the moments that matter most.
+      </div>
+    </div>
+    <div class="wines-row">
+      <div class="wine-card">
+        <div class="wine-img-wrap"><img src="strawberry passion.png" alt="Strawberry Passion"/></div>
+        <div class="wine-info">
+          <div class="wine-name">Strawberry Passion</div>
+          <div class="wine-type">Sweet Red</div>
+        </div>
+      </div>
+      <div class="wine-card">
+        <div class="wine-img-wrap"><img src="sangria.png" alt="Sangria"/></div>
+        <div class="wine-info">
+          <div class="wine-name">Sangria</div>
+          <div class="wine-type">Fruity Red</div>
+        </div>
+      </div>
+      <div class="wine-card">
+        <div class="wine-img-wrap"><img src="rosso classico.png" alt="Rosso Classico"/></div>
+        <div class="wine-info">
+          <div class="wine-name">Rosso Classico</div>
+          <div class="wine-type">Classic Sweet</div>
+        </div>
+      </div>
+      <div class="wine-card">
+        <div class="wine-img-wrap"><img src="wild blackberry.png" alt="Wild Blackberry"/></div>
+        <div class="wine-info">
+          <div class="wine-name">Wild Blackberry</div>
+          <div class="wine-type">Bold Red</div>
+        </div>
+      </div>
+      <div class="wine-card">
+        <div class="wine-img-wrap"><img src="rosso tradizionale.png" alt="Rosso Tradizionale"/></div>
+        <div class="wine-info">
+          <div class="wine-name">Rosso Tradizionale</div>
+          <div class="wine-type">Traditional</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ TAGLINE ══════════════════════════════════════ -->
+  <section id="tagline">
+    <div class="tl-left">
+      <div class="tl-eyebrow reveal">
+        <div class="tl-eyebrow-line"></div>
+        <span>Est. 1998 · Philippines</span>
+      </div>
+      <h2 class="reveal" style="transition-delay:.08s">
+        My <span class="accent">Wine</span><em>and Only</em>
+      </h2>
+      <p class="tl-sub reveal" style="transition-delay:.16s">A bottle for every story. Every gathering, every quiet evening, every celebration — Novellino is there, poured with love.</p>
+      <a href="#wines" class="btn btn-dark reveal" style="transition-delay:.24s">
+        <span>Shop Now</span>
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+    <div class="tl-right">
+      <div class="tl-ring"></div>
+      <div class="tl-ring2"></div>
+      <img class="tl-bottle" id="tlBottle" src="rosso classico.png" alt="Novellino Rosso Classico"/>
+      <div class="tl-watermark">Novellino</div>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══════════════════════════════════════ -->
+  <footer id="footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="footer-logo">Novelli<em>n</em>o</a>
+        <p class="footer-tagline">Crafting sweet memories for Filipino gatherings since 1998.</p>
+        <div class="footer-social">
+          <a href="#" class="social-btn" aria-label="Facebook">
+            <svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+          </a>
+          <a href="#" class="social-btn" aria-label="Instagram">
+            <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" class="social-btn" aria-label="TikTok">
+            <svg viewBox="0 0 24 24"><path d="M9 12a4 4 0 104 4V4a5 5 0 005 5"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Our Wines</h5>
+        <ul>
+          <li><a href="#">Rosso Classico</a></li>
+          <li><a href="#">Strawberry Passion</a></li>
+          <li><a href="#">Wild Blackberry</a></li>
+          <li><a href="#">Sangria</a></li>
+          <li><a href="#">Rosso Tradizionale</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="#">Our Purpose</a></li>
+          <li><a href="#">Our Story</a></li>
+          <li><a href="#">Press</a></li>
+          <li><a href="#">Careers</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Support</h5>
+        <ul>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">Shipping Info</a></li>
+          <li><a href="#">Returns</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 Novellino Wines Philippines. All rights reserved.</p>
+      <span class="footer-legal">Drink Responsibly · 18+ Only</span>
+    </div>
+  </footer>
+
+  <script>
+    /* ── LOADER ────────────────────────── */
+    const loader = document.getElementById('loader');
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loader.classList.add('exit');
+        setTimeout(() => { loader.style.display = 'none'; }, 750);
+      }, 2000);
+    });
+
+    /* ── CURSOR ────────────────────────── */
+    const cursor   = document.getElementById('cursor');
+    const follower = document.getElementById('cursor-follower');
+    let mx = 0, my = 0, fx = 0, fy = 0;
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + 'px';
+      cursor.style.top  = my + 'px';
+    });
+    (function animF() {
+      fx += (mx - fx) * 0.1;
+      fy += (my - fy) * 0.1;
+      follower.style.left = fx + 'px';
+      follower.style.top  = fy + 'px';
+      requestAnimationFrame(animF);
+    })();
+    document.querySelectorAll('a, button, .wine-card, .feat, .craft-bottle-wrap').forEach(el => {
+      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+    });
+
+    /* ── NAV ───────────────────────────── */
+    const navbar     = document.getElementById('navbar');
+    const hamburger  = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 60);
+    }, { passive: true });
+    function openMenu()  { hamburger.classList.add('open');    mobileMenu.classList.add('open');    document.body.style.overflow = 'hidden'; }
+    function closeMenu() { hamburger.classList.remove('open'); mobileMenu.classList.remove('open'); document.body.style.overflow = ''; }
+    hamburger.addEventListener('click', () => mobileMenu.classList.contains('open') ? closeMenu() : openMenu());
+
+    /* ── PARALLAX ──────────────────────── */
+    const heroCircle     = document.getElementById('heroCircle');
+    const heroRing       = document.getElementById('heroRing');
+    const heroBottle     = document.getElementById('heroBottle');
+    const heroCircleText = document.getElementById('heroCircleText');
+    const heroNum        = document.getElementById('heroNum');
+    const tlBottle       = document.getElementById('tlBottle');
+    let ticking = false;
+
+    function doParallax() {
+      const sy = window.scrollY;
+      const vh = window.innerHeight;
+      if (sy < vh * 1.5) {
+        heroCircle.style.transform     = `translateX(-50%) translateY(${sy * 0.18}px)`;
+        heroRing.style.transform       = `translateX(-50%) translateY(${sy * 0.1}px)`;
+        if (heroBottle) heroBottle.style.transform     = `translateY(${sy * -0.08}px)`;
+        if (heroCircleText) heroCircleText.style.transform = `translateY(${sy * 0.15}px)`;
+        if (heroNum) heroNum.style.transform = `translateY(${sy * 0.22}px)`;
+      }
+      if (tlBottle) {
+        const rect = document.getElementById('tagline').getBoundingClientRect();
+        if (rect.top < vh && rect.bottom > 0) {
+          const pct = (vh - rect.top) / (vh + rect.height);
+          tlBottle.style.transform = `translateY(${(pct - 0.5) * -70}px)`;
+        }
+      }
+      ticking = false;
+    }
+    window.addEventListener('scroll', () => {
+      if (!ticking) { requestAnimationFrame(doParallax); ticking = true; }
+    }, { passive: true });
+    doParallax();
+
+    /* ── SCROLL REVEAL ─────────────────── */
+    const revealIO = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); revealIO.unobserve(e.target); }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    document.querySelectorAll('.reveal, .feat, .wine-card').forEach(el => revealIO.observe(el));
+
+    /* ── COUNT-UP NUMBERS ──────────────── */
+    function animateCount(el, target, suffix, duration) {
+      let start = 0;
+      const step = ts => {
+        if (!start) start = ts;
+        const prog   = Math.min((ts - start) / duration, 1);
+        const eased  = 1 - Math.pow(1 - prog, 4);
+        el.innerHTML = Math.round(eased * target) + '<span>' + suffix + '</span>';
+        if (prog < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+    const statsIO = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          statsIO.unobserve(e.target);
+          const nums = document.querySelectorAll('.stat-num');
+          [{ t: 25, s: '+' }, { t: 5, s: 'M+' }].forEach((c, i) => {
+            if (nums[i]) animateCount(nums[i], c.t, c.s, 1600);
+          });
+        }
+      });
+    }, { threshold: 0.3 });
+    const statsSection = document.querySelector('.craft-stats');
+    if (statsSection) statsIO.observe(statsSection);
+
+    /* ── MAGNETIC BUTTONS ──────────────── */
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const r = btn.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width / 2;
+        const y = e.clientY - r.top - r.height / 2;
+        btn.style.transform = `translate(${x * .2}px, ${y * .2}px) translateY(-2px)`;
+      });
+      btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+    });
+  </script>
+</body>
+</html>
