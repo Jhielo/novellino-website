@@ -39,33 +39,45 @@
     body.has-cursor #cursor,
     body.has-cursor #cursor-follower { display: block; }
 
+    /* Small solid wine dot — tracks instantly */
     #cursor {
       position: fixed; z-index: 9999;
-      width: 10px; height: 10px;
+      width: 7px; height: 7px;
       background: var(--wine);
       border-radius: 50%;
       pointer-events: none;
-      /* Positioned via transform only — zero layout cost */
       top: 0; left: 0;
-      mix-blend-mode: multiply;
       will-change: transform;
-      /* No contain:strict — can break mix-blend-mode in some browsers */
+      transition: transform .15s var(--ease-expo),
+                  width .3s var(--ease-expo),
+                  height .3s var(--ease-expo),
+                  opacity .3s;
     }
+
+    /* Thin gold ring — lags behind gracefully */
     #cursor-follower {
       position: fixed; z-index: 9998;
-      width: 38px; height: 38px;
-      border: 1.5px solid rgba(107,26,42,.3);
+      width: 36px; height: 36px;
       border-radius: 50%;
+      border: 1px solid rgba(201,169,110, 0.5);
       pointer-events: none;
       top: 0; left: 0;
-      /* Only transition non-transform properties (width/height/border) */
-      transition: width .35s var(--ease-expo),
-                  height .35s var(--ease-expo),
-                  border-color .35s;
       will-change: transform;
+      transition: width .4s var(--ease-expo),
+                  height .4s var(--ease-expo),
+                  border-color .3s,
+                  opacity .3s;
     }
-    body.cursor-hover #cursor         { width: 14px; height: 14px; }
-    body.cursor-hover #cursor-follower{ width: 60px;  height: 60px; border-color: rgba(107,26,42,.5); }
+
+    /* Hover: dot disappears, ring expands and brightens */
+    body.cursor-hover #cursor {
+      opacity: 0;
+      width: 3px; height: 3px;
+    }
+    body.cursor-hover #cursor-follower {
+      width: 50px; height: 50px;
+      border-color: rgba(201,169,110, 0.9);
+    }
 
     /* ── LOADER ─────────────────────────────── */
     #loader {
@@ -288,7 +300,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      /* Promote to own layer so repaints stay inside */
       isolation: isolate;
     }
     .hero-circle-bg {
@@ -308,7 +319,6 @@
       border-radius: 50%;
       border: 1px solid rgba(201,169,110,.2);
       top: 50%; left: 50%;
-      /* Use transform so it stays on compositor thread */
       transform: translate(-50%, -50%);
       animation: slowSpin 55s linear infinite;
       pointer-events: none; z-index: 2;
@@ -349,13 +359,11 @@
       height: clamp(500px, 85vh, 760px);
       width: auto;
       object-fit: contain;
-      /* drop-shadow moved to wrapper pseudo-element to avoid per-frame filter cost */
       will-change: transform;
       opacity: 0;
       animation: bottleRise 1.4s .9s var(--ease-expo) forwards;
       flex-shrink: 0;
     }
-    /* Shadow lives on a non-animated layer underneath — no filter recalc on transform */
     .hero-bottle-shadow {
       position: absolute;
       z-index: 4;
@@ -538,7 +546,6 @@
     }
     .craft-bottle-img {
       width: 200px;
-      /* Static drop-shadow is fine here — it only recalculates on hover, not on scroll */
       filter: drop-shadow(0 28px 56px rgba(0,0,0,.6));
       transition: transform .8s var(--ease-expo);
       transform-origin: bottom center;
@@ -672,7 +679,6 @@
       display: block;
       height: clamp(190px, 21vw, 285px);
       width: auto; object-fit: contain;
-      /* Static drop-shadow — not animated, so compositor cost is paid once */
       filter: drop-shadow(0 14px 28px rgba(0,0,0,.13));
       transition: filter .35s;
     }
@@ -721,7 +727,6 @@
     .tl-bottle {
       height: 86%; max-height: 860px;
       object-fit: contain;
-      /* Shadow on a static element is fine */
       filter: drop-shadow(0 60px 120px rgba(0,0,0,.5));
       will-change: transform;
       position: relative; z-index: 2;
@@ -810,6 +815,9 @@
       .footer-bottom { padding: 18px 28px; }
       .craft-stats { grid-template-columns: 1fr; }
       .stat-item + .stat-item { border-left: none; border-top: 1px solid rgba(255,255,255,.05); }
+      /* Hide custom cursor on touch devices */
+      #cursor, #cursor-follower { display: none !important; }
+      body.has-cursor { cursor: auto !important; }
     }
     @media (max-width: 640px) {
       .features-grid { grid-template-columns: repeat(2, 1fr); }
@@ -901,7 +909,6 @@
       <div class="hero-ring-outer" id="heroRing"></div>
       <div class="hero-circle-bg" id="heroCircle"></div>
       <div class="hero-circle-text" id="heroCircleText">1998</div>
-      <!-- Static shadow blob — not animated, so no per-frame filter recalc -->
       <div class="hero-bottle-shadow"></div>
       <img
         class="hero-bottle-img"
@@ -1198,75 +1205,52 @@
 
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
        CURSOR
-       Fixes vs original:
-       - Both dot AND follower positioned at (0,0) and moved via transform
-         only — no top/left writes in JS, which are layout-triggering
-       - Dot: updated synchronously in mousemove (no rAF overhead for a 10px dot)
-       - Follower: single persistent rAF lerp; suspends after 60 idle frames
-       - Hover state: event delegation (one listener), no per-element binding
+       — Dot: instant transform, no rAF overhead
+       — Ring: rAF lerp, suspends after idle
+       — Hover: mouseenter/mouseleave per-element, no bubble noise
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    const cursorDot = document.getElementById('cursor');
+    const cursorDot  = document.getElementById('cursor');
     const cursorRing = document.getElementById('cursor-follower');
 
     let mx = 0, my = 0, fx = 0, fy = 0;
-    let rafId = null;
-    let idleFrames = 0;
-    let cursorActivated = false;
+    let rafId = null, idleFrames = 0, cursorReady = false;
 
-    // Half-sizes for centering (cursor: 5px, follower: 19px)
-    const DOT_HALF  = 5;
-    const RING_HALF = 19;
+    const D_HALF = 3.5; // dot 7px / 2
+    const R_HALF = 18;  // ring 36px / 2
 
     function activateCursor() {
-      if (!cursorActivated) {
-        cursorActivated = true;
+      if (!cursorReady) {
+        cursorReady = true;
         document.body.classList.add('has-cursor');
         scheduleLerp();
       }
     }
 
     document.addEventListener('mousemove', e => {
-      mx = e.clientX;
-      my = e.clientY;
-      // Dot tracks instantly — transform only, no layout
-      cursorDot.style.transform = `translate3d(${mx - DOT_HALF}px,${my - DOT_HALF}px,0)`;
+      mx = e.clientX; my = e.clientY;
+      cursorDot.style.transform = `translate3d(${mx - D_HALF}px,${my - D_HALF}px,0)`;
       idleFrames = 0;
       activateCursor();
+      scheduleLerp();
     }, { passive: true });
 
     function lerpStep() {
-      const dx = mx - fx;
-      const dy = my - fy;
-      if (Math.abs(dx) > 0.05 || Math.abs(dy) > 0.05) {
-        fx += dx * 0.12;
-        fy += dy * 0.12;
-        cursorRing.style.transform = `translate3d(${fx - RING_HALF}px,${fy - RING_HALF}px,0)`;
+      const dx = mx - fx, dy = my - fy;
+      if (Math.abs(dx) > 0.04 || Math.abs(dy) > 0.04) {
+        fx += dx * 0.1; fy += dy * 0.1;
+        cursorRing.style.transform = `translate3d(${fx - R_HALF}px,${fy - R_HALF}px,0)`;
         idleFrames = 0;
-      } else {
-        idleFrames++;
-      }
-
-      if (idleFrames < 60) {
-        rafId = requestAnimationFrame(lerpStep);
-      } else {
-        rafId = null; // suspend; reactivated on next mousemove
-      }
+      } else { idleFrames++; }
+      rafId = idleFrames < 80 ? requestAnimationFrame(lerpStep) : null;
     }
+    function scheduleLerp() { if (!rafId) rafId = requestAnimationFrame(lerpStep); }
 
-    function scheduleLerp() {
-      if (!rafId) rafId = requestAnimationFrame(lerpStep);
-    }
-
-    // Resume lerp on next movement after idle suspension
-    document.addEventListener('mousemove', () => { idleFrames = 0; scheduleLerp(); }, { passive: true });
-
-    // Hover detection — single delegated pair of listeners
-    const hoverSel = 'a, button, .wine-card, .feat, .craft-bottle-wrap, .btn';
-    document.addEventListener('mouseover', e => {
-      if (e.target.closest(hoverSel)) document.body.classList.add('cursor-hover');
-    });
-    document.addEventListener('mouseout', e => {
-      if (e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover');
+    const hoverTargets = document.querySelectorAll(
+      'a, button, .wine-card, .feat, .craft-bottle-wrap, .btn'
+    );
+    hoverTargets.forEach(el => {
+      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
     });
 
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1286,12 +1270,9 @@
 
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
        PARALLAX
-       Fixes vs original:
-       - Single RAF-throttled handler (ticking guard)
-       - Hero section check uses a cached rect that refreshes on resize,
-         not on every scroll frame (getBCR is a layout read)
-       - Mobile (< 1024px) skips parallax entirely
-       - Elements that are off-screen skip their transform writes
+       — Single rAF-throttled handler (ticking guard)
+       — Cached rect refreshed on resize only, not per scroll frame
+       — Skipped entirely on mobile (< 1024px)
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     const heroCircleEl  = document.getElementById('heroCircle');
     const heroBottleEl  = document.getElementById('heroBottle');
@@ -1302,9 +1283,7 @@
     const heroSec       = document.getElementById('hero');
 
     let pTicking = false;
-    let heroH = 0;       // cached hero section height
-    let taglineTop = 0;  // cached tagline offsetTop
-    let taglineH   = 0;
+    let heroH = 0, taglineTop = 0, taglineH = 0;
 
     function cacheRects() {
       if (heroSec)    heroH      = heroSec.offsetHeight;
@@ -1315,12 +1294,11 @@
 
     function doParallax() {
       pTicking = false;
-      if (window.innerWidth < 1024) return; // skip on mobile
+      if (window.innerWidth < 1024) return;
 
-      const sy  = window.scrollY;
-      const vh  = window.innerHeight;
+      const sy = window.scrollY;
+      const vh = window.innerHeight;
 
-      // Hero: only while hero is visible
       if (sy < heroH) {
         if (heroCircleEl)  heroCircleEl.style.transform  = `translateY(${sy * 0.18}px)`;
         if (heroBottleEl)  heroBottleEl.style.transform  = `translateY(${sy * -0.08}px)`;
@@ -1328,7 +1306,6 @@
         if (heroNumEl)     heroNumEl.style.transform     = `translateY(${sy * 0.22}px)`;
       }
 
-      // Tagline bottle: only while tagline is in viewport
       if (tlBottleEl) {
         const relTop = taglineTop - sy;
         if (relTop < vh && relTop + taglineH > 0) {
@@ -1339,17 +1316,14 @@
     }
 
     window.addEventListener('scroll', () => {
-      if (!pTicking) {
-        requestAnimationFrame(doParallax);
-        pTicking = true;
-      }
+      if (!pTicking) { requestAnimationFrame(doParallax); pTicking = true; }
     }, { passive: true });
 
     doParallax();
 
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
        SCROLL REVEAL + WINE CARDS + FEATURES
-       Single IntersectionObserver, unobserves after first trigger.
+       Single IntersectionObserver, unobserves after first trigger
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     const revealIO = new IntersectionObserver((entries) => {
       entries.forEach(e => {
@@ -1394,8 +1368,7 @@
     }
 
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       MAGNETIC BUTTONS
-       Desktop only, RAF-throttled.
+       MAGNETIC BUTTONS — desktop only, rAF-throttled
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     if (window.innerWidth >= 1024) {
       document.querySelectorAll('.btn').forEach(btn => {
