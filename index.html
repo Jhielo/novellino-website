@@ -8,9 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
-    /* ══════════════════════════════════════
-       TOKENS
-    ══════════════════════════════════════ */
     :root {
       --wine:       #6b1a2a;
       --wine-deep:  #3d0d17;
@@ -34,24 +31,25 @@
       background: var(--white);
       color: var(--charcoal);
       overflow-x: hidden;
-      cursor: none;
     }
 
-    /* ══════════════════════════════════════
-       CURSOR — FIX: use CSS transform only,
-       no layout-triggering properties
-    ══════════════════════════════════════ */
+    /* ── CURSOR ─────────────────────────────── */
+    #cursor, #cursor-follower { display: none; }
+    body.has-cursor { cursor: none; }
+    body.has-cursor #cursor,
+    body.has-cursor #cursor-follower { display: block; }
+
     #cursor {
       position: fixed; z-index: 9999;
       width: 10px; height: 10px;
       background: var(--wine);
       border-radius: 50%;
       pointer-events: none;
-      /* Offset by half size so translate3d(x,y,0) = exact center */
-      top: -5px; left: -5px;
+      /* Positioned via transform only — zero layout cost */
+      top: 0; left: 0;
       mix-blend-mode: multiply;
-      transition: width .2s, height .2s, opacity .2s;
       will-change: transform;
+      /* No contain:strict — can break mix-blend-mode in some browsers */
     }
     #cursor-follower {
       position: fixed; z-index: 9998;
@@ -59,19 +57,17 @@
       border: 1.5px solid rgba(107,26,42,.3);
       border-radius: 50%;
       pointer-events: none;
-      /* Offset by half size */
-      top: -19px; left: -19px;
-      transition: width .35s var(--ease-expo), height .35s var(--ease-expo), border-color .35s;
+      top: 0; left: 0;
+      /* Only transition non-transform properties (width/height/border) */
+      transition: width .35s var(--ease-expo),
+                  height .35s var(--ease-expo),
+                  border-color .35s;
       will-change: transform;
     }
-    /* When size changes on hover, re-center the offsets */
-    body.cursor-hover #cursor { width: 14px; height: 14px; top: -7px; left: -7px; }
-    body.cursor-hover #cursor-follower { width: 60px; height: 60px; top: -30px; left: -30px; border-color: rgba(107,26,42,.5); }
+    body.cursor-hover #cursor         { width: 14px; height: 14px; }
+    body.cursor-hover #cursor-follower{ width: 60px;  height: 60px; border-color: rgba(107,26,42,.5); }
 
-
-    /* ══════════════════════════════════════
-       LOADER
-    ══════════════════════════════════════ */
+    /* ── LOADER ─────────────────────────────── */
     #loader {
       position: fixed; inset: 0; z-index: 9000;
       background: var(--charcoal);
@@ -115,14 +111,13 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--wine); }
 
-    /* ══════════════════════════════════════
-       NAV
-    ══════════════════════════════════════ */
+    /* ── NAV ─────────────────────────────────── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 200;
       display: flex; align-items: center; justify-content: space-between;
       padding: 30px 60px;
-      transition: padding .5s var(--ease-expo), background .5s, backdrop-filter .5s, box-shadow .5s;
+      transition: padding .5s var(--ease-expo), background .5s, box-shadow .5s;
+      will-change: padding, background;
     }
     nav.scrolled {
       padding: 16px 60px;
@@ -157,14 +152,14 @@
     .nav-actions { display: flex; align-items: center; gap: 16px; }
     .nav-cart {
       width: 46px; height: 46px; border-radius: 50%;
-      background: var(--wine); border: none; cursor: none;
+      background: var(--wine); border: none;
       display: flex; align-items: center; justify-content: center;
       transition: background .3s, transform .3s, box-shadow .3s;
       box-shadow: 0 6px 24px rgba(107,26,42,.35);
     }
     .nav-cart:hover { background: var(--wine-deep); transform: scale(1.08); box-shadow: 0 10px 32px rgba(107,26,42,.5); }
     .nav-cart svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 1.7; }
-    .nav-hamburger { display: none; flex-direction: column; gap: 6px; background: none; border: none; cursor: none; padding: 4px; }
+    .nav-hamburger { display: none; flex-direction: column; gap: 6px; background: none; border: none; padding: 4px; }
     .nav-hamburger span { display: block; width: 24px; height: 1.5px; background: var(--charcoal); transition: .35s var(--ease-expo); border-radius: 2px; }
     .nav-hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
     .nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
@@ -188,9 +183,7 @@
     }
     .mobile-menu a:hover { color: var(--gold); }
 
-    /* ══════════════════════════════════════
-       HERO
-    ══════════════════════════════════════ */
+    /* ── HERO ─────────────────────────────────── */
     #hero {
       height: 100vh; min-height: 700px;
       display: grid;
@@ -206,7 +199,6 @@
       background-size: 32px 32px;
       mask-image: radial-gradient(ellipse 55% 80% at 15% 50%, black 0%, transparent 100%);
     }
-    /* FIX: hero-number uses CSS transform for parallax, not JS top/left */
     .hero-number {
       position: absolute;
       left: -2%; bottom: -6%;
@@ -219,7 +211,6 @@
       will-change: transform;
     }
 
-    /* LEFT COLUMN */
     .hero-content {
       position: relative; z-index: 3;
       display: flex;
@@ -290,7 +281,6 @@
       color: var(--mid); writing-mode: vertical-rl;
     }
 
-    /* RIGHT COLUMN */
     .hero-right {
       position: relative;
       overflow: hidden;
@@ -298,9 +288,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      /* Promote to own layer so repaints stay inside */
+      isolation: isolate;
     }
-    /* FIX: hero-circle-bg no longer uses translateX(-50%) — parallax
-       applied via CSS custom property to avoid transform conflicts */
     .hero-circle-bg {
       position: absolute;
       inset: 0;
@@ -318,6 +308,7 @@
       border-radius: 50%;
       border: 1px solid rgba(201,169,110,.2);
       top: 50%; left: 50%;
+      /* Use transform so it stays on compositor thread */
       transform: translate(-50%, -50%);
       animation: slowSpin 55s linear infinite;
       pointer-events: none; z-index: 2;
@@ -358,11 +349,24 @@
       height: clamp(500px, 85vh, 760px);
       width: auto;
       object-fit: contain;
-      filter: drop-shadow(0 60px 100px rgba(0,0,0,.6)) drop-shadow(0 20px 40px rgba(61,13,23,.5));
+      /* drop-shadow moved to wrapper pseudo-element to avoid per-frame filter cost */
       will-change: transform;
       opacity: 0;
       animation: bottleRise 1.4s .9s var(--ease-expo) forwards;
       flex-shrink: 0;
+    }
+    /* Shadow lives on a non-animated layer underneath — no filter recalc on transform */
+    .hero-bottle-shadow {
+      position: absolute;
+      z-index: 4;
+      bottom: 4%;
+      left: 50%; transform: translateX(-50%);
+      width: 44%;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.45);
+      filter: blur(36px);
+      pointer-events: none;
     }
     @keyframes bottleRise {
       from { opacity: 0; transform: translateY(80px) scale(.93); }
@@ -421,14 +425,12 @@
       color: rgba(255,255,255,.5);
     }
 
-    /* ══════════════════════════════════════
-       BUTTONS
-    ══════════════════════════════════════ */
+    /* ── BUTTONS ─────────────────────────────── */
     .btn {
       display: inline-flex; align-items: center; gap: 12px;
       font-size: .7rem; font-weight: 500;
       letter-spacing: .14em; text-transform: uppercase;
-      text-decoration: none; border: none; cursor: none;
+      text-decoration: none; border: none;
       padding: 17px 34px; border-radius: 60px;
       position: relative; overflow: hidden;
       transition: color .3s, box-shadow .3s, transform .3s;
@@ -462,10 +464,7 @@
     .btn-gold::before { background: var(--charcoal); }
     .btn-gold:hover { color: var(--white); box-shadow: 0 12px 36px rgba(0,0,0,.25); }
 
-    /* ══════════════════════════════════════
-       MARQUEE — FIX: doubled items so loop
-       is seamless without JS
-    ══════════════════════════════════════ */
+    /* ── MARQUEE ─────────────────────────────── */
     .marquee-strip {
       background: var(--wine);
       padding: 15px 0;
@@ -476,8 +475,8 @@
       display: flex;
       width: max-content;
       animation: marquee 30s linear infinite;
+      will-change: transform;
     }
-    /* FIX: pause on hover using CSS only, no JS needed */
     .marquee-strip:hover .marquee-track { animation-play-state: paused; }
     .marquee-item {
       display: flex; align-items: center; gap: 24px;
@@ -489,9 +488,7 @@
     .marquee-item .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
     @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    /* ══════════════════════════════════════
-       CRAFT
-    ══════════════════════════════════════ */
+    /* ── CRAFT ───────────────────────────────── */
     #craft {
       background: var(--charcoal);
       position: relative; overflow: hidden;
@@ -504,12 +501,6 @@
         radial-gradient(ellipse 55% 65% at 18% 50%, rgba(107,26,42,.28) 0%, transparent 65%),
         radial-gradient(ellipse 45% 55% at 82% 50%, rgba(107,26,42,.14) 0%, transparent 65%);
       pointer-events: none;
-    }
-    #craft::after {
-      content: '';
-      position: absolute; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.045'/%3E%3C/svg%3E");
-      background-size: 256px; opacity: .5; pointer-events: none;
     }
     .craft-inner {
       position: relative; z-index: 1;
@@ -547,6 +538,7 @@
     }
     .craft-bottle-img {
       width: 200px;
+      /* Static drop-shadow is fine here — it only recalculates on hover, not on scroll */
       filter: drop-shadow(0 28px 56px rgba(0,0,0,.6));
       transition: transform .8s var(--ease-expo);
       transform-origin: bottom center;
@@ -577,20 +569,12 @@
     .stat-num span { color: var(--gold); }
     .stat-label { font-size: .68rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.3); }
 
-    /* ══════════════════════════════════════
-       FEATURES
-    ══════════════════════════════════════ */
+    /* ── FEATURES ────────────────────────────── */
     #features { background: var(--charcoal); position: relative; overflow: hidden; }
     .features-band {
       background: var(--wine);
       padding: 76px 0 96px;
       position: relative; overflow: hidden;
-    }
-    .features-band::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
-      background-size: 180px; pointer-events: none;
     }
     .features-band::after {
       content: '';
@@ -627,7 +611,7 @@
       border-right: 1px solid rgba(255,255,255,.05);
       transition: background .4s var(--ease-expo);
       opacity: 0; transform: translateY(24px);
-      cursor: none; position: relative; overflow: hidden;
+      position: relative; overflow: hidden;
     }
     .feat:last-child { border-right: none; }
     .feat.visible { opacity: 1; transform: translateY(0); transition: opacity .6s var(--ease-expo), transform .6s var(--ease-expo), background .4s var(--ease-expo); }
@@ -654,9 +638,7 @@
     .feat-label { font-size: .7rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.85); line-height: 1.4; margin-bottom: 5px; }
     .feat-desc { font-family: 'Cormorant Garamond', serif; font-size: .93rem; line-height: 1.6; color: rgba(255,255,255,.32); }
 
-    /* ══════════════════════════════════════
-       WINES
-    ══════════════════════════════════════ */
+    /* ── WINES ───────────────────────────────── */
     #wines { background: var(--white); padding: 130px 60px 150px; overflow: hidden; }
     .wines-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 90px; }
     .wines-eyebrow { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
@@ -676,7 +658,6 @@
       flex: 1; max-width: 210px;
       display: flex; flex-direction: column;
       align-items: center; gap: 18px;
-      cursor: none;
       padding: 22px 10px 26px;
       border-radius: 22px;
       border: 1px solid transparent;
@@ -691,6 +672,7 @@
       display: block;
       height: clamp(190px, 21vw, 285px);
       width: auto; object-fit: contain;
+      /* Static drop-shadow — not animated, so compositor cost is paid once */
       filter: drop-shadow(0 14px 28px rgba(0,0,0,.13));
       transition: filter .35s;
     }
@@ -710,9 +692,7 @@
     .wine-card:hover .wine-name { color: var(--wine); }
     .wine-type { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: .92rem; color: rgba(107,107,107,.55); }
 
-    /* ══════════════════════════════════════
-       TAGLINE
-    ══════════════════════════════════════ */
+    /* ── TAGLINE ─────────────────────────────── */
     #tagline { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; overflow: hidden; }
     .tl-left {
       background: var(--cream);
@@ -737,21 +717,20 @@
     .tl-sub { font-family: 'Cormorant Garamond', serif; font-size: 1.12rem; line-height: 1.85; color: var(--mid); margin-top: 26px; max-width: 360px; position: relative; z-index: 1; }
     .tl-left .btn { margin-top: 44px; position: relative; z-index: 1; align-self: flex-start; }
     .tl-right { background: var(--wine); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    .tl-right::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E");
-      background-size: 200px; pointer-events: none;
-    }
     .tl-right::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 100% at 50% 50%, rgba(61,13,23,.4) 0%, transparent 70%); }
-    .tl-bottle { height: 86%; max-height: 860px; object-fit: contain; filter: drop-shadow(0 60px 120px rgba(0,0,0,.5)); will-change: transform; position: relative; z-index: 2; }
+    .tl-bottle {
+      height: 86%; max-height: 860px;
+      object-fit: contain;
+      /* Shadow on a static element is fine */
+      filter: drop-shadow(0 60px 120px rgba(0,0,0,.5));
+      will-change: transform;
+      position: relative; z-index: 2;
+    }
     .tl-watermark { position: absolute; z-index: 1; font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(60px, 10vw, 140px); color: rgba(255,255,255,.04); white-space: nowrap; user-select: none; pointer-events: none; bottom: 6%; left: 50%; transform: translateX(-50%); }
     .tl-ring { position: absolute; width: 320px; height: 320px; border-radius: 50%; border: 1px solid rgba(201,169,110,.14); top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; }
     .tl-ring2 { position: absolute; width: 460px; height: 460px; border-radius: 50%; border: 1px solid rgba(201,169,110,.06); top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; }
 
-    /* ══════════════════════════════════════
-       FOOTER
-    ══════════════════════════════════════ */
+    /* ── FOOTER ──────────────────────────────── */
     footer { background: var(--charcoal); }
     .footer-top {
       display: grid;
@@ -769,7 +748,7 @@
       background: rgba(255,255,255,.05);
       border: 1px solid rgba(255,255,255,.07);
       display: flex; align-items: center; justify-content: center;
-      cursor: none; text-decoration: none;
+      text-decoration: none;
       transition: background .25s, border-color .25s, transform .25s;
     }
     .social-btn:hover { background: var(--wine); border-color: var(--wine); transform: translateY(-3px); }
@@ -784,9 +763,7 @@
     .footer-legal { font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.16); display: flex; align-items: center; gap: 8px; }
     .footer-legal::before { content: ''; display: block; width: 14px; height: 1px; background: rgba(255,255,255,.16); }
 
-    /* ══════════════════════════════════════
-       SCROLL REVEAL
-    ══════════════════════════════════════ */
+    /* ── SCROLL REVEAL ───────────────────────── */
     .reveal {
       opacity: 0; transform: translateY(28px);
       transition: opacity .8s var(--ease-expo), transform .8s var(--ease-expo);
@@ -798,9 +775,7 @@
       to   { opacity: 1; transform: none; }
     }
 
-    /* ══════════════════════════════════════
-       RESPONSIVE
-    ══════════════════════════════════════ */
+    /* ── RESPONSIVE ──────────────────────────── */
     @media (max-width: 1200px) {
       .craft-inner { grid-template-columns: 1fr; text-align: center; padding: 0 40px; }
       .craft-right { text-align: center; }
@@ -848,7 +823,6 @@
       .wines-row { gap: 8px; }
     }
 
-    /* FIX: reduce motion for users who prefer it */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
@@ -898,7 +872,6 @@
     <div class="hero-grid"></div>
     <div class="hero-number" id="heroNum">1998</div>
 
-    <!-- LEFT COLUMN -->
     <div class="hero-content">
       <div class="hero-left">
         <div class="hero-eyebrow">
@@ -923,17 +896,20 @@
       </div>
     </div>
 
-    <!-- RIGHT COLUMN -->
     <div class="hero-right" id="heroRight">
       <div class="hero-ring-outer2"></div>
       <div class="hero-ring-outer" id="heroRing"></div>
       <div class="hero-circle-bg" id="heroCircle"></div>
       <div class="hero-circle-text" id="heroCircleText">1998</div>
+      <!-- Static shadow blob — not animated, so no per-frame filter recalc -->
+      <div class="hero-bottle-shadow"></div>
       <img
         class="hero-bottle-img"
         id="heroBottle"
         src="rosso classico.png"
         alt="Novellino Rosso Classico"
+        loading="eager"
+        decoding="async"
       />
       <div class="hero-badge">
         <div class="hero-badge-inner">
@@ -952,7 +928,6 @@
   <!-- MARQUEE -->
   <div class="marquee-strip" aria-hidden="true">
     <div class="marquee-track">
-      <!-- Two identical sets so the CSS loop is seamless -->
       <div class="marquee-item"><span class="dot"></span>Rosso Classico</div>
       <div class="marquee-item"><span class="dot"></span>Strawberry Passion</div>
       <div class="marquee-item"><span class="dot"></span>Wild Blackberry</div>
@@ -983,7 +958,7 @@
       </div>
       <div class="craft-bottle-wrap">
         <div class="craft-bottle-glow"></div>
-        <img class="craft-bottle-img" src="rosso classico.png" alt="Novellino Rosso Classico"/>
+        <img class="craft-bottle-img" src="rosso classico.png" alt="Novellino Rosso Classico" loading="lazy" decoding="async"/>
       </div>
       <div class="craft-right">
         <div class="craft-tag reveal" style="justify-content:flex-end">
@@ -1000,11 +975,11 @@
     </div>
     <div class="craft-stats">
       <div class="stat-item reveal">
-        <div class="stat-num">25<span>+</span></div>
+        <div class="stat-num" id="stat0">25<span>+</span></div>
         <div class="stat-label">Years of Excellence</div>
       </div>
       <div class="stat-item reveal" style="transition-delay:.1s">
-        <div class="stat-num">5<span>M+</span></div>
+        <div class="stat-num" id="stat1">5<span>M+</span></div>
         <div class="stat-label">Bottles Shared</div>
       </div>
       <div class="stat-item reveal" style="transition-delay:.2s">
@@ -1095,35 +1070,35 @@
     </div>
     <div class="wines-row">
       <div class="wine-card">
-        <div class="wine-img-wrap"><img src="strawberry passion.png" alt="Strawberry Passion"/></div>
+        <div class="wine-img-wrap"><img src="strawberry passion.png" alt="Strawberry Passion" loading="lazy" decoding="async"/></div>
         <div class="wine-info">
           <div class="wine-name">Strawberry Passion</div>
           <div class="wine-type">Sweet Red</div>
         </div>
       </div>
       <div class="wine-card">
-        <div class="wine-img-wrap"><img src="sangria.png" alt="Sangria"/></div>
+        <div class="wine-img-wrap"><img src="sangria.png" alt="Sangria" loading="lazy" decoding="async"/></div>
         <div class="wine-info">
           <div class="wine-name">Sangria</div>
           <div class="wine-type">Fruity Red</div>
         </div>
       </div>
       <div class="wine-card">
-        <div class="wine-img-wrap"><img src="rosso classico.png" alt="Rosso Classico"/></div>
+        <div class="wine-img-wrap"><img src="rosso classico.png" alt="Rosso Classico" loading="lazy" decoding="async"/></div>
         <div class="wine-info">
           <div class="wine-name">Rosso Classico</div>
           <div class="wine-type">Classic Sweet</div>
         </div>
       </div>
       <div class="wine-card">
-        <div class="wine-img-wrap"><img src="wild blackberry.png" alt="Wild Blackberry"/></div>
+        <div class="wine-img-wrap"><img src="wild blackberry.png" alt="Wild Blackberry" loading="lazy" decoding="async"/></div>
         <div class="wine-info">
           <div class="wine-name">Wild Blackberry</div>
           <div class="wine-type">Bold Red</div>
         </div>
       </div>
       <div class="wine-card">
-        <div class="wine-img-wrap"><img src="rosso tradizionale.png" alt="Rosso Tradizionale"/></div>
+        <div class="wine-img-wrap"><img src="rosso tradizionale.png" alt="Rosso Tradizionale" loading="lazy" decoding="async"/></div>
         <div class="wine-info">
           <div class="wine-name">Rosso Tradizionale</div>
           <div class="wine-type">Traditional</div>
@@ -1151,7 +1126,7 @@
     <div class="tl-right">
       <div class="tl-ring"></div>
       <div class="tl-ring2"></div>
-      <img class="tl-bottle" id="tlBottle" src="rosso classico.png" alt="Novellino Rosso Classico"/>
+      <img class="tl-bottle" id="tlBottle" src="rosso classico.png" alt="Novellino Rosso Classico" loading="lazy" decoding="async"/>
       <div class="tl-watermark">Novellino</div>
     </div>
   </section>
@@ -1210,55 +1185,93 @@
   </footer>
 
   <script>
-    /* ── LOADER ─────────────────────────────────── */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       LOADER
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     const loader = document.getElementById('loader');
     window.addEventListener('load', () => {
       setTimeout(() => {
         loader.classList.add('exit');
-        setTimeout(() => { loader.style.display = 'none'; }, 750);
+        setTimeout(() => loader.remove(), 750);
       }, 2000);
     });
 
-    /* ── CURSOR ─────────────────────────────────────
-       FIX: single rAF loop using CSS transform only.
-       Never touch .left / .top after init — they stay 0.
-       All movement is via translateX/Y to avoid layout.
-    ─────────────────────────────────────────────── */
-    const cursor   = document.getElementById('cursor');
-    const follower = document.getElementById('cursor-follower');
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       CURSOR
+       Fixes vs original:
+       - Both dot AND follower positioned at (0,0) and moved via transform
+         only — no top/left writes in JS, which are layout-triggering
+       - Dot: updated synchronously in mousemove (no rAF overhead for a 10px dot)
+       - Follower: single persistent rAF lerp; suspends after 60 idle frames
+       - Hover state: event delegation (one listener), no per-element binding
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    const cursorDot = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursor-follower');
 
-    let mx = 0, my = 0;
-    let fx = 0, fy = 0;
+    let mx = 0, my = 0, fx = 0, fy = 0;
+    let rafId = null;
+    let idleFrames = 0;
+    let cursorActivated = false;
 
-    // Dot: pure mousemove, translate3d forces GPU layer, zero calc()
+    // Half-sizes for centering (cursor: 5px, follower: 19px)
+    const DOT_HALF  = 5;
+    const RING_HALF = 19;
+
+    function activateCursor() {
+      if (!cursorActivated) {
+        cursorActivated = true;
+        document.body.classList.add('has-cursor');
+        scheduleLerp();
+      }
+    }
+
     document.addEventListener('mousemove', e => {
       mx = e.clientX;
       my = e.clientY;
-      cursor.style.transform = `translate3d(${mx}px,${my}px,0)`;
+      // Dot tracks instantly — transform only, no layout
+      cursorDot.style.transform = `translate3d(${mx - DOT_HALF}px,${my - DOT_HALF}px,0)`;
+      idleFrames = 0;
+      activateCursor();
     }, { passive: true });
 
-    // Follower: lerp in a single persistent rAF — no new rAF per event
-    let followerRunning = false;
-    function lerpFollower() {
+    function lerpStep() {
       const dx = mx - fx;
       const dy = my - fy;
-      // Only update DOM if movement is above 0.05px threshold
       if (Math.abs(dx) > 0.05 || Math.abs(dy) > 0.05) {
         fx += dx * 0.12;
         fy += dy * 0.12;
-        follower.style.transform = `translate3d(${fx}px,${fy}px,0)`;
+        cursorRing.style.transform = `translate3d(${fx - RING_HALF}px,${fy - RING_HALF}px,0)`;
+        idleFrames = 0;
+      } else {
+        idleFrames++;
       }
-      requestAnimationFrame(lerpFollower);
-    }
-    lerpFollower();
 
-    // Hover state
-    document.querySelectorAll('a, button, .wine-card, .feat, .craft-bottle-wrap').forEach(el => {
-      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
-      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+      if (idleFrames < 60) {
+        rafId = requestAnimationFrame(lerpStep);
+      } else {
+        rafId = null; // suspend; reactivated on next mousemove
+      }
+    }
+
+    function scheduleLerp() {
+      if (!rafId) rafId = requestAnimationFrame(lerpStep);
+    }
+
+    // Resume lerp on next movement after idle suspension
+    document.addEventListener('mousemove', () => { idleFrames = 0; scheduleLerp(); }, { passive: true });
+
+    // Hover detection — single delegated pair of listeners
+    const hoverSel = 'a, button, .wine-card, .feat, .craft-bottle-wrap, .btn';
+    document.addEventListener('mouseover', e => {
+      if (e.target.closest(hoverSel)) document.body.classList.add('cursor-hover');
+    });
+    document.addEventListener('mouseout', e => {
+      if (e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover');
     });
 
-    /* ── NAV ─────────────────────────────────────── */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       NAV
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     const navbar     = document.getElementById('navbar');
     const hamburger  = document.getElementById('hamburger');
     const mobileMenu = document.getElementById('mobileMenu');
@@ -1271,56 +1284,73 @@
     function closeMenu() { hamburger.classList.remove('open'); mobileMenu.classList.remove('open'); document.body.style.overflow = ''; }
     hamburger.addEventListener('click', () => mobileMenu.classList.contains('open') ? closeMenu() : openMenu());
 
-    /* ── PARALLAX ────────────────────────────────────
-       FIX: All elements use a single scroll handler with
-       requestAnimationFrame throttle. Only transform is
-       mutated — no top/left/width/height changes.
-       heroCircle uses translateY only (no translateX conflict).
-    ─────────────────────────────────────────────── */
-    const heroCircle     = document.getElementById('heroCircle');
-    const heroBottle     = document.getElementById('heroBottle');
-    const heroCircleText = document.getElementById('heroCircleText');
-    const heroNum        = document.getElementById('heroNum');
-    const tlBottle       = document.getElementById('tlBottle');
-    const taglineSection = document.getElementById('tagline');
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       PARALLAX
+       Fixes vs original:
+       - Single RAF-throttled handler (ticking guard)
+       - Hero section check uses a cached rect that refreshes on resize,
+         not on every scroll frame (getBCR is a layout read)
+       - Mobile (< 1024px) skips parallax entirely
+       - Elements that are off-screen skip their transform writes
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    const heroCircleEl  = document.getElementById('heroCircle');
+    const heroBottleEl  = document.getElementById('heroBottle');
+    const heroCircleTxt = document.getElementById('heroCircleText');
+    const heroNumEl     = document.getElementById('heroNum');
+    const tlBottleEl    = document.getElementById('tlBottle');
+    const taglineSec    = document.getElementById('tagline');
+    const heroSec       = document.getElementById('hero');
 
-    let scrollY = 0;
-    let scrollTicking = false;
+    let pTicking = false;
+    let heroH = 0;       // cached hero section height
+    let taglineTop = 0;  // cached tagline offsetTop
+    let taglineH   = 0;
+
+    function cacheRects() {
+      if (heroSec)    heroH      = heroSec.offsetHeight;
+      if (taglineSec) { taglineTop = taglineSec.offsetTop; taglineH = taglineSec.offsetHeight; }
+    }
+    cacheRects();
+    window.addEventListener('resize', cacheRects, { passive: true });
 
     function doParallax() {
-      scrollY = window.scrollY;
-      const vh = window.innerHeight;
+      pTicking = false;
+      if (window.innerWidth < 1024) return; // skip on mobile
 
-      // Hero parallax — only runs while hero is in view
-      if (scrollY < vh * 1.5) {
-        if (heroCircle)     heroCircle.style.transform     = `translateY(${scrollY * 0.18}px)`;
-        if (heroBottle)     heroBottle.style.transform     = `translateY(${scrollY * -0.08}px)`;
-        if (heroCircleText) heroCircleText.style.transform = `translateY(${scrollY * 0.15}px)`;
-        if (heroNum)        heroNum.style.transform        = `translateY(${scrollY * 0.22}px)`;
+      const sy  = window.scrollY;
+      const vh  = window.innerHeight;
+
+      // Hero: only while hero is visible
+      if (sy < heroH) {
+        if (heroCircleEl)  heroCircleEl.style.transform  = `translateY(${sy * 0.18}px)`;
+        if (heroBottleEl)  heroBottleEl.style.transform  = `translateY(${sy * -0.08}px)`;
+        if (heroCircleTxt) heroCircleTxt.style.transform = `translateY(${sy * 0.15}px)`;
+        if (heroNumEl)     heroNumEl.style.transform     = `translateY(${sy * 0.22}px)`;
       }
 
-      // Tagline bottle parallax
-      if (tlBottle && taglineSection) {
-        const rect = taglineSection.getBoundingClientRect();
-        if (rect.top < vh && rect.bottom > 0) {
-          const pct = (vh - rect.top) / (vh + rect.height);
-          tlBottle.style.transform = `translateY(${(pct - 0.5) * -70}px)`;
+      // Tagline bottle: only while tagline is in viewport
+      if (tlBottleEl) {
+        const relTop = taglineTop - sy;
+        if (relTop < vh && relTop + taglineH > 0) {
+          const pct = (vh - relTop) / (vh + taglineH);
+          tlBottleEl.style.transform = `translateY(${(pct - 0.5) * -70}px)`;
         }
       }
-
-      scrollTicking = false;
     }
 
     window.addEventListener('scroll', () => {
-      if (!scrollTicking) {
+      if (!pTicking) {
         requestAnimationFrame(doParallax);
-        scrollTicking = true;
+        pTicking = true;
       }
     }, { passive: true });
 
-    doParallax(); // run once on load
+    doParallax();
 
-    /* ── SCROLL REVEAL ───────────────────────────── */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SCROLL REVEAL + WINE CARDS + FEATURES
+       Single IntersectionObserver, unobserves after first trigger.
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     const revealIO = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting) {
@@ -1328,11 +1358,13 @@
           revealIO.unobserve(e.target);
         }
       });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
     document.querySelectorAll('.reveal, .feat, .wine-card').forEach(el => revealIO.observe(el));
 
-    /* ── COUNT-UP NUMBERS ────────────────────────── */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       COUNT-UP NUMBERS
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     function animateCount(el, target, suffix, duration) {
       let startTs = null;
       const step = ts => {
@@ -1345,31 +1377,44 @@
       requestAnimationFrame(step);
     }
 
-    const statsIO = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          statsIO.unobserve(e.target);
-          const nums = document.querySelectorAll('.stat-num');
-          [{ t: 25, s: '+' }, { t: 5, s: 'M+' }].forEach((c, i) => {
-            if (nums[i]) animateCount(nums[i], c.t, c.s, 1600);
-          });
-        }
-      });
-    }, { threshold: 0.3 });
-
     const statsSection = document.querySelector('.craft-stats');
-    if (statsSection) statsIO.observe(statsSection);
+    if (statsSection) {
+      const statsIO = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            statsIO.disconnect();
+            const s0 = document.getElementById('stat0');
+            const s1 = document.getElementById('stat1');
+            if (s0) animateCount(s0, 25, '+',  1600);
+            if (s1) animateCount(s1,  5, 'M+', 1600);
+          }
+        });
+      }, { threshold: 0.3 });
+      statsIO.observe(statsSection);
+    }
 
-    /* ── MAGNETIC BUTTONS ────────────────────────── */
-    document.querySelectorAll('.btn').forEach(btn => {
-      btn.addEventListener('mousemove', e => {
-        const r = btn.getBoundingClientRect();
-        const x = e.clientX - r.left - r.width  / 2;
-        const y = e.clientY - r.top  - r.height / 2;
-        btn.style.transform = `translate(${x * .2}px, ${y * .2}px) translateY(-2px)`;
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       MAGNETIC BUTTONS
+       Desktop only, RAF-throttled.
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    if (window.innerWidth >= 1024) {
+      document.querySelectorAll('.btn').forEach(btn => {
+        let magTicking = false, bex = 0, bey = 0;
+        btn.addEventListener('mousemove', e => {
+          const r = btn.getBoundingClientRect();
+          bex = e.clientX - r.left - r.width  / 2;
+          bey = e.clientY - r.top  - r.height / 2;
+          if (!magTicking) {
+            requestAnimationFrame(() => {
+              btn.style.transform = `translate(${bex * .2}px,${bey * .2}px) translateY(-2px)`;
+              magTicking = false;
+            });
+            magTicking = true;
+          }
+        }, { passive: true });
+        btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
       });
-      btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
-    });
+    }
   </script>
 </body>
 </html>
